@@ -1,0 +1,98 @@
+decInt_to_8bit <- function(x, precs) {
+q <- c()
+r <- c()
+xx <- c()
+for(i in 1:precs){
+xx[1] <- x
+q[i] <- xx[i] %/% 2
+r[i] <- xx[i] %% 2
+xx[i+1] <- q[i]
+}
+rr <- rev(r)
+return(rr)
+}
+
+devDec_to_8bit <- function(x, precs) {
+nas <- c()
+nbs <- c()
+xxs <- c()
+for(i in 1:precs)
+{
+xxs[1] <- x*2
+nas[i] <- (xxs[i]) - floor(xxs[i])
+nbs[i] <- trunc(xxs[i], 1)
+xxs[i+1] <- nas[i]*2
+}
+return(nbs)
+}
+
+remove.zero.aft <- function(a) {
+n <- length(a)
+for(i in n:1){
+if (a[n]==0) a <- a[-n]
+else return(a)
+n <- n-1
+}
+}
+
+remove.zero.bef <- function(a) {
+n <- length(a)
+for(i in 1:n){
+if (a[1]==0) a <- a[-1]
+else return(a)
+}
+}
+
+dec.to.nbit <- function(x,n) {
+aa <- abs(trunc(x, 1))
+bb <- abs(x) - abs(trunc(x)) 
+q <- c()
+r <- c()
+xx <- c()
+for(i in 1:n){
+xx[1] <- aa
+q[i] <- xx[i] %/% 2
+r[i] <- xx[i] %% 2
+xx[i+1] <- q[i]
+}
+rr <- rev(r) 
+nas <- c()
+nbs <- c()
+xxs <- c()
+for(i in 1:n)
+{
+xxs[1] <- bb*2
+nas[i] <- (xxs[i]) - floor(xxs[i])
+nbs[i] <- trunc(xxs[i], 1)
+xxs[i+1] <- nas[i]*2
+}
+
+bef <- paste(remove.zero.bef(rr), collapse="")
+aft <- paste(remove.zero.aft(nbs), collapse="")
+bef.aft <- c(bef, aft)
+strings <- paste(bef.aft, collapse=".")
+return(strings)
+}
+ 
+dec.to.ieee754 <- function(x) {
+aa <- abs(trunc(x, 1))
+bb <- abs(x) - abs(trunc(x)) 
+rr <- decInt_to_8bit(aa, 32) 
+ppc <- 24 - length(remove.zero.bef(rr))
+nbs <- devDec_to_8bit(bb, ppc)
+bef <- remove.zero.bef(rr)
+aft <- remove.zero.aft(nbs)
+exp <- length(bef) - 1
+mantissa <- c(bef[-1], aft)
+exp.bin <- decInt_to_8bit(exp + 127, 16)
+exp.bin <- remove.zero.bef(exp.bin)
+first <- c()
+if (sign(x)==1) first=c(0)
+if (sign(x)==-1) first=c(1)
+
+ieee754 <- c(first, exp.bin, mantissa, rep(0, 23-length(mantissa)))
+ieee754 <- paste(ieee754, collapse="")
+return(ieee754)
+}
+    
+dec.to.ieee754(3.141590118408203125)
